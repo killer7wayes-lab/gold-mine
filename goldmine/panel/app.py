@@ -19,7 +19,7 @@ import webbrowser
 from flask import (Flask, abort, flash, jsonify, redirect, render_template, request,
                    send_from_directory, url_for)
 
-from .. import (alerts, config, db, export, grouping, pipeline, publish, scheduler,
+from .. import (alerts, config, db, export, googleads, grouping, pipeline, publish, scheduler,
                 scoring, signals)
 from ..defaults import MAGENTO, NICHES, PRESTASHOP
 
@@ -332,8 +332,10 @@ def product(pid):
     sourcing_rows = db.rows(conn, "SELECT * FROM sourcing WHERE product_id=? AND price IS NOT NULL", (pid,))
     sig = next((p for p in signals.compute_country(conn, prod["country"]) if p["id"] == pid), None)
     res = scoring.score(sig, cfg["scoring"], scoring.costs_of(cfg["countries"][prod["country"]])) if sig else None
+    google = googleads.by_product(conn, prod["country"]).get(pid)
     conn.close()
     return render_template("product.html", p=prod, ads=ads, sourcing=sourcing_rows, sig=sig, res=res,
+                           google=google,
                            currency=cfg["countries"][prod["country"]]["currency"])
 
 
@@ -389,7 +391,8 @@ def settings_save():
     g["run_times"] = times
     for key, lo, hi in (("max_ads_per_run", 20, 5000), ("max_ads_per_search", 10, 500),
                         ("max_page_scans_per_run", 0, 200), ("max_landing_fetches_per_run", 0, 500),
-                        ("max_sourcing_per_run", 0, 200), ("export_top_n", 20, 2000)):
+                        ("max_sourcing_per_run", 0, 200), ("max_google_checks_per_run", 0, 300),
+                        ("export_top_n", 20, 2000)):
         g[key] = int(min(max(_num(f.get(key), g[key]), lo), hi))
     g["headless"] = f.get("headless") == "1"
     g["publish"] = f.get("publish") == "1"

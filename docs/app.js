@@ -17,7 +17,7 @@
   var TIER = { low: 'faible', medium: 'moyen', high: 'élevé' };
 
   var state = { index: null, data: {}, country: '', tab: 'winners', settings: null,
-                cat: '', trend: '', shown: PAGE, open: {} };
+                cat: '', trend: '', google: false, shown: PAGE, open: {} };
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
 
   // ------------------------------------------------------------ helpers
@@ -158,6 +158,20 @@
     return '<div class="block"><h4>Sourcing</h4><ul class="plain">' + out + '</ul><div class="links">' +
       link(s.aliexpress, 'Chercher sur AliExpress', 'gold') + lens + '</div></div>';
   }
+  // Google's public archive is asked about the seller's website, not about one product
+  function googleBlock(p) {
+    var g = p.google;
+    if (!g) return '';
+    if (!g.ads) {
+      return '<div class="block"><h4>Google Ads</h4><p class="small">Aucune pub Google trouvée pour ' + esc(g.site) + '.</p></div>';
+    }
+    return '<div class="block"><h4>Google Ads</h4><p class="small">Le vendeur <b>' + esc(g.site) + '</b> fait aussi de la pub sur Google : ' +
+      g.ads + (g.more ? '+' : '') + ' pub' + (g.ads > 1 ? 's' : '') +
+      (g.last ? ', dernière vue le ' + esc(dateFr(g.last)) : '') +
+      (g.active ? '' : ' (plus rien depuis 30 jours)') +
+      '. Ce chiffre concerne tout le site, pas seulement ce produit.</p><div class="links">' +
+      link(g.url, 'Voir ses pubs Google') + '</div></div>';
+  }
   function card(item, extraChip) {
     var p = item.p, r = item.r, code = item.code, cur = countryInfo(code).currency;
     var cls = r.score >= 70 ? 'high' : (r.score >= 45 ? 'mid' : '');
@@ -175,6 +189,7 @@
       '<span class="chip">' + esc(p.cat) + '</span>' +
       '<span class="chip ' + r.trend_label + '">' + TREND[r.trend_label] + '</span>' +
       (isNew ? '<span class="chip new">Nouveau</span>' : '') +
+      (p.google && p.google.active ? '<span class="chip google" title="Le vendeur fait aussi de la pub sur Google">Aussi sur Google</span>' : '') +
       (r.price_war ? '<span class="chip dying">Guerre des prix</span>' : '') + '</div>' +
       '<div class="kpis"><div><b>' + esc(money(p.price, cur)) + '</b><small>prix</small></div>' +
       '<div><b class="' + (m === null ? '' : (m < 0 ? 'neg' : 'pos')) + '">' +
@@ -183,7 +198,7 @@
       '<div><b>' + p.days + ' j</b><small>en ligne</small></div></div></div></div>' +
       '<p class="reason" dir="auto">' + esc(r.reason) + '</p></div>' +
       '<details data-key="' + esc(key) + '"' + (state.open[key] ? ' open' : '') + '><summary>Détails, pubs et sourcing</summary>' +
-      quick + moneyBlock(p, r, cur) + sourcingBlock(p, cur) + adsBlock(p, code) + sparkline(p.history) +
+      quick + moneyBlock(p, r, cur) + sourcingBlock(p, cur) + googleBlock(p) + adsBlock(p, code) + sparkline(p.history) +
       '</details></article>';
   }
   // a click anywhere on the product (picture, name, numbers) opens its details
@@ -202,10 +217,11 @@
     }
     return html;
   }
+  function onGoogle(it) { return !state.google || !!(it.p.google && it.p.google.active); }
   function byFilters(it) {
     if (state.cat && it.p.cat !== state.cat) return false;
     if (state.trend && it.r.trend_label !== state.trend) return false;
-    return true;
+    return onGoogle(it);
   }
 
   // ------------------------------------------------------------ tabs
@@ -221,7 +237,7 @@
   function viewTrends() {
     var all = scored(state.country);
     var items = all.filter(function (it) {
-      return it.p.active && it.r.trend_label === 'rising' && (!state.cat || it.p.cat === state.cat);
+      return it.p.active && it.r.trend_label === 'rising' && (!state.cat || it.p.cat === state.cat) && onGoogle(it);
     }).sort(function (a, b) { return b.p.trend - a.p.trend || b.p.new7 - a.p.new7 || b.r.score - a.r.score; });
     var estimated = all.some(function (it) { return it.p.trend_source === 'estimate'; });
     return (estimated ? '<p class="note">Tant que l’historique a moins de 4 jours, la tendance est estimée à partir des dates de lancement des pubs. Elle devient plus fiable à chaque scan.</p>' : '') +
@@ -458,6 +474,7 @@
       var id = e.target.id, v = e.target.value;
       if (id === 'f-cat') state.cat = v;
       else if (id === 'f-trend') state.trend = v;
+      else if (id === 'f-google') state.google = v === '1';
       else if (id === 'f-score') state.settings.thresholds.min_score = parseFloat(v) || 0;
       else if (id === 'f-margin') state.settings.thresholds.min_margin = v === '' ? null : parseFloat(v);
       state.shown = PAGE; saveSettings(); render();

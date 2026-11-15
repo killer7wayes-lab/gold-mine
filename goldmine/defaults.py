@@ -52,6 +52,7 @@ DEFAULT_CONFIG = {
         "max_page_scans_per_run": 15,
         "max_landing_fetches_per_run": 60,
         "max_sourcing_per_run": 15,
+        "max_google_checks_per_run": 20,     # seller websites looked up on Google Ads (0 = off)
         "export_top_n": 300,
         "headless": True,
         "publish": True,                     # git push docs/ after each run

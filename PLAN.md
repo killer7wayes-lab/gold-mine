@@ -69,6 +69,7 @@ gold-mine/
     signals.py           raw signals per product + snapshots + trend
     scoring.py           score /100 + French reason (mirror of docs/app.js)
     sourcing.py          local stores + AliExpress link
+    googleads.py         do the sellers' websites also run Google ads? (Ads Transparency Center)
     export.py            JSON for the dashboard
     alerts.py            Telegram
     publish.py           git push
@@ -95,6 +96,8 @@ gold-mine/
 | `products` | id | country, name, category, image, supplier price (manual), `global_id` (cross-country link), manual name |
 | `product_snapshots` | (product_id, day) | sellers, active ads, new ads 7d, duplicates, median/min price ─► trends |
 | `sourcing` | (product_id, store) | best local store match: title, price, URL, checked_at |
+| `google_ads` | (domain, country) | Google ads leading to a seller's website: count, last shown, checked_at |
+| `state` | key | small notes between runs (e.g. `google_blocked_until`) |
 | `alerts` | (product_id) | last score alerted, when |
 
 An ad seen in two countries is two rows (same `ad_id`, different `country`): everything is

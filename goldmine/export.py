@@ -13,7 +13,7 @@ import json
 import logging
 import shutil
 
-from . import __version__, config, db, scoring, signals, sourcing
+from . import __version__, config, db, googleads, scoring, signals, sourcing
 
 log = logging.getLogger("goldmine.export")
 
@@ -42,6 +42,7 @@ def export(conn, cfg: dict) -> dict:
         costs = scoring.costs_of(ccfg)
         products = signals.compute_country(conn, code)
         products.sort(key=lambda p: -scoring.score(p, cfg["scoring"], costs)["score"])
+        google = googleads.by_product(conn, code)
         out = []
         for p in products[:top_n]:
             img = ""
@@ -65,6 +66,7 @@ def export(conn, cfg: dict) -> dict:
                 "price_drop": p["price_drop"], "supplier": _round(p["supplier"]),
                 "supplier_note": p["supplier_note"], "history": p["history"],
                 "ads": p["ads"], "sourcing": sourcing.links_for(conn, p, ccfg),
+                "google": google.get(p["id"]),
             })
         _write(data_dir / f"{code}.json", {
             "country": code, "generated_at": now, "products": out,

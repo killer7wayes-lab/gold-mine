@@ -77,6 +77,13 @@ CREATE TABLE IF NOT EXISTS sourcing(
   search_url TEXT, match INTEGER, checked_at TEXT,
   PRIMARY KEY(product_id, store));
 
+CREATE TABLE IF NOT EXISTS google_ads(      -- Google ads leading to a seller's website
+  domain TEXT, country TEXT, ads INTEGER, more INTEGER DEFAULT 0, advertiser TEXT,
+  first_shown TEXT, last_shown TEXT, checked_at TEXT,
+  PRIMARY KEY(domain, country));
+
+CREATE TABLE IF NOT EXISTS state(key TEXT PRIMARY KEY, value TEXT);   -- small notes between runs
+
 CREATE TABLE IF NOT EXISTS alerts(
   product_id INTEGER PRIMARY KEY, score REAL, sent_at TEXT);
 """

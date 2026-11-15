@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#14110b">
 <title>Gold Mine – produits gagnants</title>
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 <header class="top">
@@ -40,6 +40,12 @@
         <option value="dying">En baisse</option>
       </select>
     </label>
+    <label>Google Ads
+      <select id="f-google">
+        <option value="">Peu importe</option>
+        <option value="1">Vendeur aussi sur Google</option>
+      </select>
+    </label>
     <label>Score min.
       <input id="f-score" type="number" min="0" max="100" step="5" inputmode="numeric" placeholder="0">
     </label>
@@ -51,11 +57,12 @@
 </main>
 
 <footer class="foot">
-  Données publiques de la Bibliothèque publicitaire Meta. Les marges et coûts pub sont des
+  Données publiques de la Bibliothèque publicitaire Meta et du Centre de transparence publicitaire
+  de Google. Les marges et coûts pub sont des
   estimations, pas des chiffres réels.
 </footer>
 
-<script src="score.js?v=2"></script>
-<script src="app.js?v=2"></script>
+<script src="score.js?v=3"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>

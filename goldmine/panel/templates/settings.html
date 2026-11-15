@@ -20,6 +20,7 @@
       <label>Pages surveillées re-scannées par scan <input type="number" name="max_page_scans_per_run" value="{{ g.max_page_scans_per_run }}"></label>
       <label>Pages de vente lues par scan <input type="number" name="max_landing_fetches_per_run" value="{{ g.max_landing_fetches_per_run }}"></label>
       <label>Produits cherchés en magasin par scan <input type="number" name="max_sourcing_per_run" value="{{ g.max_sourcing_per_run }}"></label>
+      <label>Sites de vendeurs vérifiés sur Google Ads par scan (0 = désactivé) <input type="number" name="max_google_checks_per_run" value="{{ g.max_google_checks_per_run }}"></label>
       <label>Produits envoyés au tableau de bord (par pays) <input type="number" name="export_top_n" value="{{ g.export_top_n }}"></label>
     </div>
     <label class="check"><input type="checkbox" name="headless" value="1" {{ 'checked' if g.headless }}> Navigateur invisible pendant le scan</label>

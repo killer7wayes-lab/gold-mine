@@ -339,6 +339,10 @@ def stage_process(conn, cfg: dict, run_id: int, stats: dict, countries: list[str
     stats["sourcing"] = sourcing.update(conn, cfg, int(gen["max_sourcing_per_run"]))
     log.info("Sourcing: %d produits cherchés dans les magasins locaux", stats["sourcing"])
 
+    from . import googleads
+    stats["google"] = googleads.update(conn, cfg, int(gen.get("max_google_checks_per_run", 0)))
+    log.info("Google Ads: %d sites de vendeurs vérifiés", stats["google"])
+
     from . import export
     stats["export"] = export.export(conn, cfg)
     log.info("Export: %(products)d produits, %(images)d images, %(countries)d pays", stats["export"])

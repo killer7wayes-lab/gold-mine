@@ -179,6 +179,15 @@ def is_shop_url(url: str) -> bool:
     return bool(dom) and not any(dom == d or dom.endswith("." + d) for d in _NOT_A_SHOP)
 
 
+def own_site(url: str) -> str:
+    """Domain of the seller's own website. "" for social links, app stores and
+    shops hosted on a shared platform (x.converty.shop, x.myshopify.com)."""
+    dom = domain_of(url)
+    if "." not in dom or not is_shop_url(url):
+        return ""
+    return "" if any(needle in dom for needle in _SHOP_PLATFORMS) else dom
+
+
 def platform_from_url(url: str) -> str:
     low = (url or "").lower()
     for needle, name in _SHOP_PLATFORMS.items():

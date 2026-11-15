@@ -19,6 +19,19 @@
   <button class="gold">Enregistrer</button>
 </form>
 
+{% if google %}
+<div class="card">
+  <h2>Google Ads</h2>
+  {% if google.ads %}
+  <p>Le vendeur <b>{{ google.site }}</b> fait aussi de la pub sur Google : {{ google.ads }}{{ '+' if google.more }} pub(s){% if google.last %}, dernière vue le {{ google.last }}{% endif %}{{ '' if google.active else ' (plus rien depuis 30 jours)' }}.
+    <a href="{{ google.url }}" target="_blank" rel="noopener">Voir ses pubs Google</a></p>
+  <p class="help">Ce chiffre concerne tout le site du vendeur, pas seulement ce produit.</p>
+  {% else %}
+  <p class="help">Aucune pub Google trouvée pour {{ google.site }}.</p>
+  {% endif %}
+</div>
+{% endif %}
+
 {% if sourcing %}
 <div class="card">
   <h2>Trouvé dans les magasins locaux</h2>

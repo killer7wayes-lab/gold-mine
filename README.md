@@ -127,6 +127,21 @@ Double-click `panel.bat`.
   that Facebook slows the scan down) and "Produits envoyés au tableau de bord" (300 by default).
 - Searches take turns: with many keywords, each scan runs the ones searched longest ago.
 
+### "Aussi sur Google": does the seller also pay for Google ads?
+
+Gold Mine finds products on Facebook and Instagram only. Google has a public archive too (the Ads
+Transparency Center), but it cannot be searched by keyword, so it cannot discover products. Gold
+Mine uses it as a second opinion: after each scan it asks Google whether the websites of the
+best-scored sellers also run Google ads.
+
+- On the dashboard, such products carry the chip **Aussi sur Google**, the filter **Google Ads**
+  keeps only them, and the details show how many Google ads the site has, with a link to see them.
+- The answer is about the seller's whole website, not about that one product.
+- Sellers without their own website (Converty or Shopify sub-addresses, Messenger, WhatsApp)
+  cannot be checked.
+- It is slow on purpose: 20 websites per scan, each one re-checked every 10 days. Change the
+  number in **Réglages** ("Sites de vendeurs vérifiés sur Google Ads par scan"; 0 switches it off).
+
 ### The other tabs of the dashboard
 
 - **Tendances** – products rising fastest this week.
@@ -154,6 +169,9 @@ Double-click `panel.bat`.
   they are only looked up for products of those categories (never for shoes or creams). Mytek
   refuses automatic reading, so for Mytek, for Jumia (all categories) and for AliExpress, which
   is never scraped, you get a ready-made search link instead.
+- Google ads: Google refuses quickly when asked too often (about 25 questions in three minutes
+  were enough). When that happens the tool stops asking for 12 hours instead of insisting, so the
+  Google marks fill in over several days.
 - The free GitHub Pages site is public: anyone who has the link can open your dashboard (it asks
   search engines not to list it).
 
