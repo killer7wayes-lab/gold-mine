@@ -142,8 +142,11 @@ def _class_price(soup, country):
     return best[0][1]
 
 
-def parse(html: str, url: str, country: dict) -> dict:
+def parse(html, url: str, country: dict) -> dict:
+    """`html` may be bytes: BeautifulSoup then reads the charset from the page."""
     soup = BeautifulSoup(html, "html.parser")
+    if isinstance(html, bytes):
+        html = html.decode("utf-8", errors="ignore")
     title = ""
     og = soup.find("meta", attrs={"property": "og:title"})
     if og and og.get("content"):
@@ -174,8 +177,7 @@ def fetch(url: str, country: dict) -> dict:
         if resp.status_code >= 400:
             return {"title": "", "price": None, "platform": "", "status": f"http {resp.status_code}"}
         raw = resp.raw.read(MAX_BYTES, decode_content=True)
-        html = raw.decode(resp.encoding or "utf-8", errors="replace")
-        out = parse(html, resp.url or url, country)
+        out = parse(raw, resp.url or url, country)
         out["status"] = "ok"
         return out
     except Exception as exc:                  # noqa: BLE001

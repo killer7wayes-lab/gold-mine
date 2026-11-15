@@ -335,6 +335,10 @@ def stage_process(conn, cfg: dict, run_id: int, stats: dict, countries: list[str
         for res, p in ranked[:5]:
             log.info("[%s] %3d/100  %s — %s", country, res["score"], p["name"][:50], res["reason"])
 
+    from . import sourcing
+    stats["sourcing"] = sourcing.update(conn, cfg, int(gen["max_sourcing_per_run"]))
+    log.info("Sourcing: %d produits cherchés dans les magasins locaux", stats["sourcing"])
+
 
 # ------------------------------------------------------------------ entry point
 
