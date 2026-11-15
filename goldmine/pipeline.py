@@ -298,8 +298,27 @@ def mark_stale(conn, cfg: dict) -> int:
 # ------------------------------------------------------------------ stages after scraping
 
 def stage_process(conn, cfg: dict, run_id: int, stats: dict, countries: list[str]) -> None:
-    """Filled in by the next build steps (grouping, scoring, sourcing, export)."""
+    from . import grouping, landing, media
+
+    gen = cfg["general"]
     stats["stale"] = mark_stale(conn, cfg)
+
+    stats["thumbs"] = media.fetch_missing(conn)
+    log.info("Images: %d miniatures téléchargées", stats["thumbs"])
+    stats["landings"] = landing.fetch_missing(conn, cfg, int(gen["max_landing_fetches_per_run"]))
+    log.info("Pages de vente: %d lues", stats["landings"])
+
+    all_countries = sorted({r[0] for r in conn.execute("SELECT DISTINCT country FROM ads")})
+    stats["new_products"] = 0
+    for country in all_countries:
+        if country not in cfg["countries"]:
+            continue
+        res = grouping.group_country(conn, cfg, country)
+        stats["new_products"] += res["new_products"]
+        if res["new_ads"]:
+            log.info("[%s] Regroupement: %d pubs -> %d nouveaux produits",
+                     country, res["new_ads"], res["new_products"])
+    stats["cross_links"] = grouping.link_countries(conn, cfg)
 
 
 # ------------------------------------------------------------------ entry point

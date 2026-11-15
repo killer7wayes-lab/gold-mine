@@ -26,7 +26,7 @@ BOILERPLATE = set("""
 livraison gratuite paiement commandez commander commande maintenant prix promo
 promotion offre stock limite limitee disponible domicile tunisie maroc algerie
 dt tnd dh mad da dzd nouveau nouvelle top qualite original garantie contactez
-appelez whatsapp message inbox توصيل التوصيل مجاني مجانا الدفع عند الاستلام
+appelez whatsapp message inbox express free shipping shop now order click cliquez ici اضغط هنا توصيل التوصيل مجاني مجانا الدفع عند الاستلام
 اطلب الان الخلاص السعر سعر عرض خاص تخفيض الكميه محدوده لكامل الولايات لكل
 متوفر جديد اصلي ضمان للطلب تونس المغرب الجزائر دينار درهم دج""".split())
 
@@ -63,11 +63,36 @@ def ecom_hint_count(text: str) -> int:
     return sum(1 for hint in ECOM_HINTS if normalize(hint) in norm)
 
 
+def _kw_match(word: str, toks: set, norm: str) -> bool:
+    if " " in word:
+        return word in norm
+    if word in toks:
+        return True
+    if len(word) >= 5:                       # stems: "nettoy" -> nettoyage, nettoyant
+        return any(t.startswith(word) for t in toks)
+    return False
+
+
+_AR_PREFIXES = ("وال", "بال", "كال", "فال", "لل", "ال")
+
+
+def _with_bare_arabic(toks: set) -> set:
+    """Add Arabic words without their article: للسياره / السياره -> سياره"""
+    out = set(toks)
+    for t in toks:
+        for pre in _AR_PREFIXES:
+            if t.startswith(pre) and len(t) - len(pre) >= 3:
+                out.add(t[len(pre):])
+                break
+    return out
+
+
 def categorize(text: str) -> str:
-    norm = " " + normalize(text) + " "
+    norm = normalize(text)
+    toks = _with_bare_arabic(set(norm.split()))
     best, best_hits = "Autre", 0
     for cat, words in CATEGORIES.items():
-        hits = sum(1 for w in words if (" " + w) in norm)
+        hits = sum(1 for w in words if _kw_match(w, toks, norm))
         if hits > best_hits:
             best, best_hits = cat, hits
     return best
@@ -80,16 +105,29 @@ def clean_line(text: str) -> str:
     return _SPACES.sub(" ", _EMOJI.sub(" ", text or "")).strip(" -–—:|•*.!،")
 
 
-def product_name(title: str, body: str, landing_title: str = "") -> str:
-    """Best human-readable product name we can get for one ad."""
-    for cand in (title, landing_title):
+def _informative(cand: str, page_name: str = "") -> bool:
+    """Does this line name a product (and not 'Livraison gratuite 🔥')?"""
+    if not cand or "{{" in cand or len(cand) < 4:
+        return False
+    if page_name and normalize(cand) == normalize(page_name):
+        return False
+    return len(tokens(cand, drop_boilerplate=True)) >= 2
+
+
+def product_name(title: str, body: str, landing_title: str = "", page_name: str = "") -> str:
+    """Best human-readable product name we can get for one ad: the title of
+    its product page, else the ad headline, else the first meaningful line."""
+    for cand in (landing_title, title):
         cand = clean_line(cand)
-        if len(cand) >= 4 and "{{" not in cand and len(tokens(cand, True)) >= 1:
+        if _informative(cand, page_name):
             return cand[:90]
-    for line in (body or "").splitlines():
-        line = clean_line(line)
-        if len(line) >= 6 and "{{" not in line and tokens(line, True):
+    lines = [clean_line(ln) for ln in (body or "").splitlines()]
+    for line in lines:
+        if _informative(line, page_name):
             return line[:90]
+    for cand in [clean_line(title)] + lines:
+        if len(cand) >= 4 and "{{" not in cand:
+            return cand[:90]
     return clean_line(body)[:90]
 
 
