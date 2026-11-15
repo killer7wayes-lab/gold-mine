@@ -62,7 +62,9 @@ def parse_number(raw: str, decimals: int = 2, price_min: float = 0, price_max: f
             if len(tail) == 3:
                 as_decimal = float(head + "." + tail)
                 as_thousand = float(head + tail)
-                if decimals == 3 and as_decimal >= price_min:
+                # millimes are written round (3,000 / 89,900): that is a decimal
+                # even when it is too cheap to be a real COD price
+                if decimals == 3 and (as_decimal >= price_min or tail.endswith("00")):
                     value = as_decimal
                 else:
                     value = as_thousand

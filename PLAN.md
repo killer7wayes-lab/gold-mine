@@ -38,7 +38,7 @@ Key decisions
 - **Scores are computed twice with the same formula**: in the browser (`docs/app.js`, live
   sliders) and in Python (`scoring.py`, for Telegram alerts and the panel). The exporter ships
   only raw signals + the default settings. Both implementations are checked against each other
-  by `tests/test_parity.py`.
+  on 400 random products by `tests/test_scoring.py` (needs Node.js, skipped without).
 - **Config is one JSON file with one block per country.** Defaults live in
   `goldmine/defaults.py`; `config/config.json` only stores what the user changed in the panel.
   It is git-ignored (it can hold the Telegram token).
@@ -143,11 +143,11 @@ Each part is turned into 0…1, then weighted. Default weights (sum 100):
 | Part | Weight | 0…1 curve |
 |---|---|---|
 | Days running | 25 | `min(days / 45, 1)` |
-| Sellers | 20 | 1 seller 0.40 · 2 sellers 0.70 · 3 up to `max_sellers` 1.0 · then falls linearly to 0.15 at 2×`max_sellers` |
+| Sellers | 20 | 1 seller 0.40 · 2 sellers 0.70 · 3 up to 60 % of `max_sellers` 1.0 · then falls linearly to 0.40 at `max_sellers` (floor 0.15) |
 | New ads this week | 15 | `min(new7 / 5, 1)` |
-| Duplicate creatives | 10 | `min(log(1+dups) / log(11), 1)` |
+| Duplicate creatives | 10 | `min(log(dups) / log(10), 1)` (1 = no duplicate = 0 point) |
 | Trend | 15 | `(trend + 1) / 2` |
-| Margin | 15 | `clamp(margin / margin_target, 0, 1)` (`margin_target` per country, 40 DT in TN) |
+| Margin | 15 | `clamp(margin / margin_target, 0, 1)` (`margin_target` per country, 40 DT in TN); unknown price = 0 |
 
 Penalties (after weighting): no active ad → ×0.35; price war (median price dropped ≥ 15 %,
 or cheapest seller ≥ 35 % under the median with ≥ 3 sellers) → −8; more than half of the

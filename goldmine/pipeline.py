@@ -298,10 +298,11 @@ def mark_stale(conn, cfg: dict) -> int:
 # ------------------------------------------------------------------ stages after scraping
 
 def stage_process(conn, cfg: dict, run_id: int, stats: dict, countries: list[str]) -> None:
-    from . import grouping, landing, media
+    from . import grouping, landing, media, scoring, signals
 
     gen = cfg["general"]
     stats["stale"] = mark_stale(conn, cfg)
+    signals.reprice(conn, cfg)
 
     stats["thumbs"] = media.fetch_missing(conn)
     log.info("Images: %d miniatures téléchargées", stats["thumbs"])
@@ -319,6 +320,20 @@ def stage_process(conn, cfg: dict, run_id: int, stats: dict, countries: list[str
             log.info("[%s] Regroupement: %d pubs -> %d nouveaux produits",
                      country, res["new_ads"], res["new_products"])
     stats["cross_links"] = grouping.link_countries(conn, cfg)
+
+    # raw signals + today's snapshot (this is what trends are built from)
+    stats["products"] = 0
+    for country in all_countries:
+        if country not in cfg["countries"]:
+            continue
+        products = signals.compute_country(conn, country)
+        signals.write_snapshots(conn, run_id, products)
+        stats["products"] += len(products)
+        costs = scoring.costs_of(cfg["countries"][country])
+        ranked = sorted(((scoring.score(p, cfg["scoring"], costs), p) for p in products),
+                        key=lambda x: -x[0]["score"])
+        for res, p in ranked[:5]:
+            log.info("[%s] %3d/100  %s — %s", country, res["score"], p["name"][:50], res["reason"])
 
 
 # ------------------------------------------------------------------ entry point

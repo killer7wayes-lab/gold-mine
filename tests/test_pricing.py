@@ -28,6 +28,8 @@ FR = DEFAULT_CONFIG["countries"]["FR"]
     ("-50% sur tout le site", None),
     ("Appelez le 55 123 456", None),
     ("Promo DT", None),
+    ("Pâtée chat 3,000 DT", None),
+    ("12,500 DT", 12.5),
     ("47d livraison gratuite meuble d'entrée", 47),
     ("🚚 𝐋𝐢𝐯𝐫𝐚𝐢𝐬𝐨𝐧 gratuite dès 100 DT", None),
     ("𝐏𝐫𝐢𝐱 𝟔𝟓 𝐃𝐓", 65),
