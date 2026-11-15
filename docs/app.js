@@ -163,7 +163,12 @@
     var cls = r.score >= 70 ? 'high' : (r.score >= 45 ? 'mid' : '');
     var isNew = p.first_seen && (Date.now() - new Date(p.first_seen + 'T12:00:00').getTime()) < 4 * 864e5;
     var m = r.money.margin, key = code + ':' + p.id;
-    return '<article class="card"><div class="card-main"><div class="thumb">' +
+    var first = (p.ads || [])[0], shop = (p.ads || []).filter(function (a) { return a.url; })[0];
+    var quick = '<div class="links quick">' +
+      (first ? link('https://www.facebook.com/ads/library/?id=' + encodeURIComponent(first.id), 'Voir la pub', 'gold') : '') +
+      (shop ? link(shop.url, 'Page de vente', 'gold') : '') + '</div>';
+    return '<article class="card"><div class="card-open" data-toggle="1" role="button" tabindex="0" ' +
+      'title="Ouvrir / fermer les détails"><div class="card-main"><div class="thumb">' +
       (p.img ? '<img loading="lazy" alt="" src="' + esc(p.img) + '">' : '<div class="noimg">📦</div>') +
       '<span class="score ' + cls + '" title="Score sur 100">' + r.score + '</span></div><div class="info">' +
       '<h3 dir="auto">' + esc(p.name) + '</h3><div class="chips">' + (extraChip || '') +
@@ -176,10 +181,18 @@
       (m === null ? '?' : (r.money.supplier_estimated ? '~' : '') + esc(money(m, cur))) + '</b><small>marge</small></div>' +
       '<div><b>' + p.sellers + '</b><small>vendeur' + (p.sellers > 1 ? 's' : '') + '</small></div>' +
       '<div><b>' + p.days + ' j</b><small>en ligne</small></div></div></div></div>' +
-      '<p class="reason" dir="auto">' + esc(r.reason) + '</p>' +
+      '<p class="reason" dir="auto">' + esc(r.reason) + '</p></div>' +
       '<details data-key="' + esc(key) + '"' + (state.open[key] ? ' open' : '') + '><summary>Détails, pubs et sourcing</summary>' +
-      moneyBlock(p, r, cur) + sourcingBlock(p, cur) + adsBlock(p, code) + sparkline(p.history) +
+      quick + moneyBlock(p, r, cur) + sourcingBlock(p, cur) + adsBlock(p, code) + sparkline(p.history) +
       '</details></article>';
+  }
+  // a click anywhere on the product (picture, name, numbers) opens its details
+  function toggleCard(target) {
+    var zone = target.closest && target.closest('[data-toggle]');
+    var det = zone && zone.parentNode.querySelector('details');
+    if (!det) return false;
+    det.open = !det.open;
+    return true;
   }
   function grid(items, chipFn) {
     var shown = items.slice(0, state.shown);
@@ -452,7 +465,13 @@
     $('#view').addEventListener('input', function (e) { if (state.tab === 'settings') onSettingInput(e); });
     $('#view').addEventListener('click', function (e) {
       if (e.target.id === 'more') { state.shown += PAGE; render(); return; }
+      if (toggleCard(e.target)) return;
       if (state.tab === 'settings') onSettingClick(e);
+    });
+    $('#view').addEventListener('keydown', function (e) {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset && e.target.dataset.toggle) {
+        e.preventDefault(); toggleCard(e.target);
+      }
     });
     $('#view').addEventListener('toggle', function (e) {
       var key = e.target.dataset && e.target.dataset.key;

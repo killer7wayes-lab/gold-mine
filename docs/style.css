@@ -46,8 +46,11 @@ main { max-width: 1100px; margin: 0 auto; padding: 12px 14px 40px; }
 .note { background: var(--gold-soft); border-radius: 10px; padding: 9px 12px; font-size: 13px; margin: 0 0 12px; }
 .empty { text-align: center; color: var(--muted); padding: 40px 10px; }
 
-.grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+.grid { display: grid; gap: 12px; grid-template-columns: 1fr; align-items: start; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; }
+.card-open { cursor: pointer; border-radius: 10px; -webkit-tap-highlight-color: transparent; }
+.card-open:hover h3 { color: var(--gold); }
+.card-open:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 .card-main { display: flex; gap: 12px; }
 .thumb { position: relative; flex: none; width: 104px; height: 104px; border-radius: 10px; overflow: hidden;
   background: var(--chip); }
@@ -83,6 +86,7 @@ ul.plain { list-style: none; margin: 0; padding: 0; }
 ul.plain li { padding: 6px 0; border-bottom: 1px dashed var(--line); font-size: 13.5px; overflow-wrap: anywhere; }
 ul.plain li:last-child { border-bottom: 0; }
 .links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.links.quick { margin-top: 8px; }
 .btn { display: inline-block; border: 1px solid var(--line); background: var(--card); color: var(--ink);
   border-radius: 9px; padding: 6px 10px; font: inherit; font-size: 13px; text-decoration: none; cursor: pointer; }
 .btn.gold { background: var(--gold); border-color: var(--gold); color: #fff; font-weight: 600; }
