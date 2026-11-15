@@ -47,10 +47,34 @@ def load() -> dict:
     return cfg
 
 
+def _changes(base, cfg):
+    """Only what differs from the defaults, so improved defaults (new store
+    selectors, new keys) keep reaching users who saved their settings."""
+    if isinstance(base, dict) and isinstance(cfg, dict):
+        out = {}
+        for key, value in cfg.items():
+            if key not in base:
+                out[key] = value
+            else:
+                sub = _changes(base[key], value)
+                if sub is not _SAME:
+                    out[key] = sub
+        return out if out else _SAME
+    return _SAME if base == cfg else cfg
+
+
+_SAME = object()
+
+
 def save(cfg: dict) -> None:
     CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
     tmp = CONFIG_PATH.with_suffix(".tmp")
-    tmp.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
+    changes = _changes(DEFAULT_CONFIG, cfg)
+    if changes is _SAME:
+        changes = {}
+    if cfg.get("presets") != DEFAULT_CONFIG["presets"]:
+        changes["presets"] = cfg["presets"]          # presets are replaced as a whole
+    tmp.write_text(json.dumps(changes, ensure_ascii=False, indent=2), encoding="utf-8")
     tmp.replace(CONFIG_PATH)
 
 

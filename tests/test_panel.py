@@ -77,7 +77,9 @@ def test_config_is_written_by_the_panel(panel):
                export_top_n="200", headless="1", tg_min_score="80", w_days="30", w_sellers="20", w_new7="10",
                w_dups="10", w_trend="10", w_margin="20", t_min_score="40", t_min_margin="",
                t_max_sellers="6", t_min_days="3", est_supplier_ratio="30")
-    cfg = json.loads((panel.tmp / "config" / "config.json").read_text(encoding="utf-8"))
+    saved = json.loads((panel.tmp / "config" / "config.json").read_text(encoding="utf-8"))
+    assert "TN" not in saved.get("countries", {})         # only changes are written
+    cfg = config.load()
     ma = cfg["countries"]["MA"]
     assert ma["active"] and ma["delivery_cost"] == 30 and ma["return_rate"] == pytest.approx(0.28)
     assert "توصيل سريع" in ma["keywords"] and "DH" not in ma["keywords"]

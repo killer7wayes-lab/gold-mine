@@ -213,27 +213,17 @@ Presets shipped: "Faible concurrence", "Grosse marge", "En pleine croissance".
 - Facebook can change the Ad Library at any time; the parser is tolerant but may need a fix.
 - AliExpress is never scraped: we only build a search link.
 
-## 9. Status (for whoever continues)
+## 9. Status
 
-Done and committed: steps 0-4 (plan, scraper, grouping, scoring, sourcing & margin).
-`python -m goldmine run` and `python -m goldmine process` work end to end up to sourcing.
+All six steps are built and committed. 53 tests pass (`python -m pytest tests`).
 
-Still to build:
-- Step 5: `goldmine/export.py` (SQLite -> `docs/data/index.json` + `docs/data/<CC>.json` + product
-  images in `docs/data/img/`, using `signals.compute_country`, `signals.new_sellers`,
-  `sourcing.links_for`) and the dashboard `docs/index.html` + `app.js` + `style.css`
-  (French, mobile-first, tabs, filters, live sliders, presets in localStorage). `docs/score.js`
-  (the scorer) already exists and is tested against `scoring.py`.
-- Step 6: `goldmine/panel/` (Flask), `scheduler.py` (schtasks, 07:00 / 14:00 Tunis time),
-  `alerts.py` (Telegram), `publish.py` (git push docs/), `setup.bat`, `panel.bat`, `run.bat`.
-  `cli.py` already references `scheduler.setup()` and `panel.app.serve()`.
-- README.md and the Windows setup guide.
-
-Known issues:
-- Sourcing: Spacenet and Tunisianet searches work. Mytek answers HTTP 403 to plain requests and
-  SBS Informatique returns no items with the PrestaShop selectors: both need their selectors /
-  access checked (the search links are still generated for them).
-- Grouping across several sellers is covered by unit tests but has only been seen on a small
-  live sample (120 ads); check the groups after a full-size scan.
-- `setup` must not rely on `playwright install`: Windows Smart App Control blocks the bundled
-  Chromium on this PC. The scraper already uses installed Chrome, then Edge.
+Known limits, in order of usefulness to fix next:
+- Sourcing: Mytek answers HTTP 403 to plain requests (search link only).
+- Grouping uses connected components: a chain A~B~C can glue two different products. The panel
+  has merge / split; a stricter rule (complete-link) would reduce manual fixes.
+- Landing-page price readers are generic (JSON-LD, meta, embedded JSON, CSS class); a shop
+  platform with an unusual layout returns no price ("prix inconnu").
+- The scheduled task and git publish are Windows-first; on Linux/macOS use cron and run
+  `python -m goldmine run`.
+- Windows Smart App Control blocks Playwright's bundled Chromium on some PCs: the scraper uses the
+  installed Chrome, then Edge, and only then the bundled browser.

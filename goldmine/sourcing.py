@@ -48,7 +48,7 @@ def parse_results(html, store: dict, country_cfg: dict, base_url: str) -> list[d
     """Search result page -> [{title, price, url}] (first 12 items)."""
     soup = BeautifulSoup(html, "html.parser")
     out = []
-    for item in soup.select(store.get("item") or ".product-miniature")[:12]:
+    for item in soup.select(store.get("item") or ".product-miniature")[:24]:
         link = item.select_one(store.get("title") or "a")
         if link is None:
             continue

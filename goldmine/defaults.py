@@ -6,7 +6,7 @@ Everything country-specific lives in one block per country under "countries".
 """
 
 PRESTASHOP = {
-    "item": ".product-miniature, .ajax_block_product",
+    "item": ".product-miniature, .ajax_block_product, .tvproduct-wrapper",
     "title": ".product-title a, .product-name, h2 a, h3 a",
     "price": ".price, .product-price",
 }
@@ -127,7 +127,8 @@ DEFAULT_CONFIG = {
                  **PRESTASHOP},
                 {"name": "SBS Informatique", "enabled": True,
                  "search_url": "https://www.sbsinformatique.com/recherche?controller=search&s={q}",
-                 **PRESTASHOP},
+                 "item": ".tvproduct-wrapper", "title": ".tvproduct-name a, .product-title a",
+                 "price": ".price"},
             ],
             active=True,
         ),
