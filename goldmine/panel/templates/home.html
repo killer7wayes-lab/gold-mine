@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="card">
+  <h2>Scanner maintenant</h2>
+  <p class="help">Un scan lit la Bibliothèque publicitaire (sans connexion Facebook), regroupe les produits,
+    recalcule tout et publie le tableau de bord. Comptez 10 à 30 minutes.</p>
+  <form method="post" action="{{ url_for('run_now') }}" class="row">
+    <input type="hidden" name="_t" value="{{ token }}">
+    <button class="gold" name="mode" value="scan" id="btn-scan" {{ 'disabled' if running }}>▶ Lancer un scan</button>
+    <button name="mode" value="process" {{ 'disabled' if running }}>Recalculer et publier sans scanner</button>
+    <span id="state" class="pill {{ 'ok' if running }}">{{ 'Scan en cours…' if running else 'Au repos' }}</span>
+  </form>
+  <p class="muted" style="margin:12px 0 0">
+    Planification :
+    {% if scheduled and times %}scans automatiques à {{ times|join(' et ') }} (heure de ce PC).
+    {% else %}<b>désactivée</b> – enregistrez les heures dans Réglages pour l'activer.{% endif %}
+    {% if pages_url %}<br>Tableau de bord en ligne : <a href="{{ pages_url }}" target="_blank">{{ pages_url }}</a>{% endif %}
+  </p>
+</div>
+
+<div class="card">
+  <h2>Ce que contient la base</h2>
+  {% if counts %}
+  <table>
+    <tr><th>Pays</th><th>Pubs</th><th>Pubs actives</th><th>Produits</th></tr>
+    {% for code, c in counts.items() %}
+    <tr><td>{{ countries[code].flag if code in countries }} {{ countries[code].name if code in countries else code }}</td>
+      <td>{{ c.ads }}</td><td>{{ c.active or 0 }}</td><td>{{ c.products }}</td></tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="help">Rien pour le moment : lancez un premier scan.</p>{% endif %}
+</div>
+
+<div class="card">
+  <h2>Derniers scans</h2>
+  <table id="runs">
+    <tr><th>N°</th><th>Début</th><th>Origine</th><th>État</th><th>Pubs lues</th><th>Nouvelles</th><th>Publication / erreur</th></tr>
+    {% for r in runs %}
+    <tr><td>{{ r.id }}</td><td>{{ r.started[:16].replace('T',' ') }}</td><td>{{ r.trigger }}</td>
+      <td><span class="pill {{ 'ok' if r.status == 'done' else ('ko' if r.status == 'failed' else '') }}">
+        {{ {'done':'terminé','partial':'partiel (Facebook a bloqué)','failed':'échec','running':'en cours'}.get(r.status, r.status) }}</span></td>
+      <td>{{ r.ads }}</td><td>{{ r.new }}</td><td>{{ r.error or r.publish }}</td></tr>
+    {% else %}<tr><td colspan="7" class="muted">Aucun scan.</td></tr>{% endfor %}
+  </table>
+</div>
+
+<div class="card">
+  <h2>Journal du dernier scan</h2>
+  <pre id="log">{{ log or 'Vide.' }}</pre>
+</div>
+
+<script>
+  let wasRunning = {{ 'true' if running else 'false' }};
+  async function tick() {
+    try {
+      const s = await (await fetch('{{ url_for("api_status") }}')).json();
+      const log = document.getElementById('log');
+      const atEnd = log.scrollTop + log.clientHeight >= log.scrollHeight - 30;
+      log.textContent = s.log || 'Vide.';
+      if (atEnd) log.scrollTop = log.scrollHeight;
+      const st = document.getElementById('state');
+      st.textContent = s.running ? 'Scan en cours…' : 'Au repos';
+      st.className = 'pill' + (s.running ? ' ok' : '');
+      if (wasRunning && !s.running) location.reload();
+      wasRunning = s.running;
+    } catch (e) {}
+  }
+  setInterval(tick, 3000);
+  const log = document.getElementById('log'); log.scrollTop = log.scrollHeight;
+</script>
+{% endblock %}

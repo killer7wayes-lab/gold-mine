@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="tabs" style="margin-bottom:12px">
+  {% for code, c in countries.items() if c.active or code == cur %}
+    <a class="btn {{ 'gold' if code == cur }}" href="{{ url_for('pages', c=code) }}">{{ c.flag }} {{ c.name }}</a>
+  {% endfor %}
+</div>
+<form class="card" method="post" action="{{ url_for('pages_edit', c=cur) }}">
+  <input type="hidden" name="_t" value="{{ token }}">
+  <h2>Surveiller une page</h2>
+  <p class="help">Les pages e-commerce trouvées par les mots-clés sont ajoutées toutes seules (effet boule de neige).
+    Vous pouvez aussi en ajouter une à la main : collez son identifiant ou le lien « voir toutes ses pubs ».</p>
+  <div class="grid">
+    <label>Identifiant ou lien de la page <input type="text" name="add" placeholder="123456789012345"></label>
+    <label>Nom (facultatif) <input type="text" name="name"></label>
+  </div>
+  <button class="gold">Ajouter</button>
+</form>
+<div class="card">
+  <h2>{{ pages|length }} pages – {{ countries[cur].name }}</h2>
+  <table>
+    <tr><th>Page</th><th>Origine</th><th>Pubs actives</th><th>Dernier scan</th><th></th></tr>
+    {% for p in pages %}
+    <tr>
+      <td><a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country={{ cur }}&search_type=page&view_all_page_id={{ p.page_id }}" target="_blank" rel="noopener" dir="auto">{{ p.name or p.page_id }}</a></td>
+      <td>{{ 'retirée' if p.ignored else ('ajoutée à la main' if p.watch == 2 else 'automatique') }}</td>
+      <td>{{ p.active_ads }}</td>
+      <td>{{ (p.last_scanned or '—')[:16].replace('T',' ') }}</td>
+      <td>
+        <form method="post" action="{{ url_for('pages_edit', c=cur) }}">
+          <input type="hidden" name="_t" value="{{ token }}">
+          {% if p.ignored %}<button name="restore" value="{{ p.page_id }}">Remettre</button>
+          {% else %}<button class="link" name="ignore" value="{{ p.page_id }}">Retirer</button>{% endif %}
+        </form>
+      </td>
+    </tr>
+    {% else %}<tr><td colspan="5" class="muted">Aucune page pour le moment.</td></tr>{% endfor %}
+  </table>
+</div>
+{% endblock %}

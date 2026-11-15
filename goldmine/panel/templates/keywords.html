@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="tabs" style="margin-bottom:12px">
+  {% for code, c in countries.items() %}
+    <a class="btn {{ 'gold' if code == cur }}" href="{{ url_for('keywords', c=code) }}">{{ c.flag }} {{ c.name }}{{ '' if c.active else ' (inactif)' }}</a>
+  {% endfor %}
+</div>
+<div class="card">
+  <h2>Mots-clés – {{ countries[cur].name }}</h2>
+  <p class="help">Chaque scan cherche ces expressions dans la Bibliothèque publicitaire du pays, en commençant par
+    celles cherchées il y a le plus longtemps. Pensez « livraison, paiement à la livraison, prix » dans les langues du pays.</p>
+  <div class="tags">
+    {% for kw in countries[cur].keywords %}
+    <form method="post" action="{{ url_for('keywords_edit', c=cur) }}" class="tag">
+      <input type="hidden" name="_t" value="{{ token }}"><input type="hidden" name="remove" value="{{ kw }}">
+      <span dir="auto">{{ kw }}</span>
+      {% if stats.get(kw) %}<span class="muted">· {{ stats[kw].ads }} pubs</span>{% endif %}
+      <button class="link" title="Supprimer">✕</button>
+    </form>
+    {% else %}<span class="muted">Aucun mot-clé : ce pays ne trouvera rien.</span>{% endfor %}
+  </div>
+</div>
+<form class="card" method="post" action="{{ url_for('keywords_edit', c=cur) }}">
+  <input type="hidden" name="_t" value="{{ token }}">
+  <h2>Ajouter des mots-clés</h2>
+  <label>Un par ligne <textarea name="add" dir="auto" placeholder="livraison gratuite&#10;الدفع عند الاستلام"></textarea></label>
+  <button class="gold">Ajouter</button>
+</form>
+{% endblock %}

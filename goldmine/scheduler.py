@@ -155,7 +155,7 @@ def setup() -> int:
     if url:
         print("[4/4] GitHub Pages :", url)
     else:
-        print("[4/4] GitHub Pages : pas encore relié. Voir GUIDE_INSTALLATION.md, étape 4.")
+        print("[4/4] GitHub Pages : pas encore relié. Voir SETUP_WINDOWS.md, étape 4.")
     print("\nTerminé. Double-cliquez sur panel.bat pour ouvrir le panneau de contrôle,")
     print("puis cliquez sur « Lancer un scan ».\n")
     return 0 if browser else 1

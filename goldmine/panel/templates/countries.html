@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block body %}
+<p class="help">Seuls les pays activés sont scannés. Chaque pays a sa monnaie, ses coûts et ses mots-clés.</p>
+{% for code, c in countries.items() %}
+<form class="card" method="post" action="{{ url_for('country_save', code=code) }}">
+  <input type="hidden" name="_t" value="{{ token }}">
+  <div class="row" style="justify-content:space-between">
+    <h2>{{ c.flag }} {{ c.name }} <span class="muted">({{ code }})</span></h2>
+    <label class="check"><input type="checkbox" name="active" value="1" {{ 'checked' if c.active }}> Pays actif (scanné)</label>
+  </div>
+  <details {{ 'open' if c.active }}>
+    <summary class="muted" style="cursor:pointer;margin:6px 0 12px">Monnaie, coûts et magasins</summary>
+    <div class="grid">
+      <label>Nom <input type="text" name="name" value="{{ c.name }}"></label>
+      <label>Monnaie affichée <input type="text" name="currency" value="{{ c.currency }}"></label>
+      <label>Coût de livraison <input type="number" step="any" name="delivery_cost" value="{{ c.delivery_cost }}"></label>
+      <label>Taux de retour (%) <input type="number" step="any" min="0" max="90" name="return_rate" value="{{ (c.return_rate * 100)|round(1) }}"></label>
+      <label>Coût pub par vente (niveau moyen) <input type="number" step="any" name="ad_cost" value="{{ c.ad_cost }}"></label>
+      <label>Marge « idéale » (points de marge au maximum) <input type="number" step="any" name="margin_target" value="{{ c.margin_target }}"></label>
+      <label>Prix minimum plausible <input type="number" step="any" name="price_min" value="{{ c.price_min }}"></label>
+      <label>Prix maximum plausible <input type="number" step="any" name="price_max" value="{{ c.price_max }}"></label>
+      <label>Décimales de la monnaie
+        <select name="decimals"><option value="2" {{ 'selected' if c.decimals != 3 }}>2 (89,90)</option>
+          <option value="3" {{ 'selected' if c.decimals == 3 }}>3 – millimes (89,900)</option></select></label>
+    </div>
+    <label>Façons d'écrire la monnaie dans les pubs (séparées par des virgules)
+      <input type="text" name="currency_tokens" value="{{ c.currency_tokens|join(', ') }}"></label>
+    <label>Magasins locaux pour le sourcing – un par ligne : <code>Nom | adresse de recherche avec {q}</code>
+      <textarea name="stores">{% for s in c.stores %}{{ s.name }} | {{ s.search_url }}
+{% endfor %}</textarea></label>
+  </details>
+  <button class="gold">Enregistrer {{ c.name }}</button>
+  <a class="btn" href="{{ url_for('keywords', c=code) }}">Mots-clés ({{ c.keywords|length }})</a>
+</form>
+{% endfor %}
+
+<form class="card" method="post" action="{{ url_for('country_add') }}">
+  <input type="hidden" name="_t" value="{{ token }}">
+  <h2>Ajouter un pays</h2>
+  <div class="grid">
+    <label>Code à 2 lettres (celui de la Bibliothèque publicitaire) <input type="text" name="code" maxlength="2" placeholder="EG"></label>
+    <label>Nom <input type="text" name="name" placeholder="Égypte"></label>
+    <label>Monnaie <input type="text" name="currency" placeholder="EGP"></label>
+  </div>
+  <button>Ajouter</button>
+</form>
+{% endblock %}

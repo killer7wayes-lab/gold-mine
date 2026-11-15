@@ -84,9 +84,10 @@ def _setup_logging(run_id: int):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except (AttributeError, ValueError):
         pass
-    sh = logging.StreamHandler(sys.stdout)
-    sh.setFormatter(fmt)
-    root.addHandler(sh)
+    if sys.stdout is not None:               # pythonw (scheduled task) has no console
+        sh = logging.StreamHandler(sys.stdout)
+        sh.setFormatter(fmt)
+        root.addHandler(sh)
     return path
 
 
@@ -374,6 +375,15 @@ def run(trigger: str = "manual", scrape: bool = True, only_countries=None,
         if scrape and countries:
             stage_scrape(conn, cfg, run_id, stats, countries)
         stage_process(conn, cfg, run_id, stats, countries)
+
+        from . import alerts, publish as publisher
+        stats["alerts"] = alerts.run(conn, cfg)
+        if stats["alerts"]:
+            log.info("Telegram: %d alerte(s) envoyée(s)", stats["alerts"])
+        if publish and cfg["general"].get("publish", True):
+            ok, msg = publisher.publish()
+            stats["publish"] = msg
+            log.info("Publication: %s", msg)
         status = "partial" if stats.get("blocked") else "done"
         log.info("Terminé: %s", json.dumps(stats, ensure_ascii=False))
     except KeyboardInterrupt:

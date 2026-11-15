@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="tabs" style="margin-bottom:12px">
+  {% for code, c in countries.items() if c.active or code == cur %}
+    <a class="btn {{ 'gold' if code == cur }}" href="{{ url_for('products', c=code) }}">{{ c.flag }} {{ c.name }}</a>
+  {% endfor %}
+</div>
+<form class="card row" method="get" action="{{ url_for('products') }}">
+  <input type="hidden" name="c" value="{{ cur }}">
+  <input type="search" name="q" value="{{ q }}" placeholder="Chercher un produit…" style="flex:1;min-width:200px">
+  <button>Chercher</button>
+</form>
+<form class="card" method="post" action="{{ url_for('products_merge') }}">
+  <input type="hidden" name="_t" value="{{ token }}"><input type="hidden" name="c" value="{{ cur }}">
+  <div class="row" style="justify-content:space-between">
+    <h2>{{ total }} produits – {{ countries[cur].name }}</h2>
+    <button class="gold">Fusionner les produits cochés</button>
+  </div>
+  <p class="help">Deux lignes pour le même produit ? Cochez-les puis « Fusionner » (le premier coché garde le nom).
+    Ouvrez un produit pour saisir votre prix fournisseur, le renommer ou séparer des pubs mal regroupées.</p>
+  <table>
+    <tr><th></th><th>Score</th><th>Produit</th><th>Prix</th><th>Fournisseur</th><th>Vendeurs</th><th>Pubs</th></tr>
+    {% for r, p in items %}
+    <tr>
+      <td><input type="checkbox" name="ids" value="{{ p.id }}"></td>
+      <td><span class="score">{{ r.score }}</span></td>
+      <td><a href="{{ url_for('product', pid=p.id) }}" dir="auto">{{ p.name }}</a><br><span class="muted">{{ r.reason }}</span></td>
+      <td>{{ p.price if p.price is not none else '?' }}</td>
+      <td>{{ p.supplier if p.supplier is not none else '—' }}</td>
+      <td>{{ p.sellers }}</td><td>{{ p.active_ads }}/{{ p.total_ads }}</td>
+    </tr>
+    {% else %}<tr><td colspan="7" class="muted">Aucun produit. Lancez un scan.</td></tr>{% endfor %}
+  </table>
+</form>
+{% endblock %}

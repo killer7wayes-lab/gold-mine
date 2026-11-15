@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block body %}
+{% set g = cfg.general %}{% set sc = cfg.scoring %}{% set tg = cfg.telegram %}
+<form method="post" action="{{ url_for('settings_save') }}">
+  <input type="hidden" name="_t" value="{{ token }}">
+  <div class="card">
+    <h2>Heures des scans</h2>
+    <p class="help">En heure de Tunis, séparées par des virgules. Le PC doit être allumé et la session ouverte ;
+      un scan manqué est rattrapé au prochain démarrage. Laissez vide pour désactiver.</p>
+    <label>Heures (ex. 07:00, 14:00) <input type="text" name="run_times" value="{{ g.run_times|join(', ') }}"></label>
+  </div>
+
+  <div class="card">
+    <h2>Volume par scan</h2>
+    <p class="help">Rester raisonnable évite que Facebook bloque. En cas de blocage, le scan fait une pause puis s'arrête
+      proprement et garde ce qu'il a déjà lu.</p>
+    <div class="grid">
+      <label>Pubs à lire par scan (tous pays) <input type="number" name="max_ads_per_run" value="{{ g.max_ads_per_run }}"></label>
+      <label>Pubs par recherche <input type="number" name="max_ads_per_search" value="{{ g.max_ads_per_search }}"></label>
+      <label>Pages surveillées re-scannées par scan <input type="number" name="max_page_scans_per_run" value="{{ g.max_page_scans_per_run }}"></label>
+      <label>Pages de vente lues par scan <input type="number" name="max_landing_fetches_per_run" value="{{ g.max_landing_fetches_per_run }}"></label>
+      <label>Produits cherchés en magasin par scan <input type="number" name="max_sourcing_per_run" value="{{ g.max_sourcing_per_run }}"></label>
+      <label>Produits envoyés au tableau de bord (par pays) <input type="number" name="export_top_n" value="{{ g.export_top_n }}"></label>
+    </div>
+    <label class="check"><input type="checkbox" name="headless" value="1" {{ 'checked' if g.headless }}> Navigateur invisible pendant le scan</label>
+  </div>
+
+  <div class="card">
+    <h2>Publication sur GitHub Pages</h2>
+    <label class="check"><input type="checkbox" name="publish" value="1" {{ 'checked' if g.publish }}> Publier le tableau de bord après chaque scan</label>
+    <div class="grid">
+      <label>Adresse du dépôt GitHub <input type="text" name="remote" value="{{ remote }}" placeholder="https://github.com/votre-nom/gold-mine.git"></label>
+      <label>Adresse du tableau de bord (facultatif, devinée sinon) <input type="text" name="dashboard_url" value="{{ g.dashboard_url or '' }}"></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Alertes Telegram (facultatif, gratuit)</h2>
+    <p class="help">Créez un bot avec @BotFather, copiez son jeton, écrivez-lui un message, puis récupérez votre
+      identifiant de discussion avec @userinfobot. Voir le guide d'installation.</p>
+    <label class="check"><input type="checkbox" name="tg_enabled" value="1" {{ 'checked' if tg.enabled }}> M'alerter quand un produit dépasse le score choisi</label>
+    <div class="grid">
+      <label>Jeton du bot <input type="text" name="tg_token" value="{{ tg.token }}" autocomplete="off"></label>
+      <label>Identifiant de discussion <input type="text" name="tg_chat_id" value="{{ tg.chat_id }}"></label>
+      <label>Score d'alerte <input type="number" name="tg_min_score" min="0" max="100" value="{{ tg.min_score|int }}"></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Réglages de score par défaut</h2>
+    <p class="help">Point de départ du tableau de bord (où vous les bougez en direct avec des curseurs) et base des alertes Telegram.</p>
+    <div class="grid">
+      {% for key, label in [('days','Poids : ancienneté'),('sellers','Poids : vendeurs'),('new7','Poids : nouvelles pubs'),('dups','Poids : créatifs dupliqués'),('trend','Poids : tendance'),('margin','Poids : marge')] %}
+      <label>{{ label }} <input type="number" step="any" min="0" name="w_{{ key }}" value="{{ sc.weights[key] }}"></label>
+      {% endfor %}
+      <label>Score minimum <input type="number" name="t_min_score" value="{{ sc.thresholds.min_score or 0 }}"></label>
+      <label>Marge minimum (vide = aucune) <input type="number" step="any" name="t_min_margin" value="{{ sc.thresholds.min_margin if sc.thresholds.min_margin is not none else '' }}"></label>
+      <label>Vendeurs maximum <input type="number" name="t_max_sellers" value="{{ sc.thresholds.max_sellers }}"></label>
+      <label>Jours en ligne minimum <input type="number" name="t_min_days" value="{{ sc.thresholds.min_days or 0 }}"></label>
+      <label>Prix fournisseur estimé (% du prix) <input type="number" step="any" name="est_supplier_ratio" value="{{ (sc.est_supplier_ratio * 100)|round(0)|int }}"></label>
+    </div>
+  </div>
+  <button class="gold">Enregistrer les réglages</button>
+</form>
+<form method="post" action="{{ url_for('telegram_test') }}" style="margin-top:12px">
+  <input type="hidden" name="_t" value="{{ token }}">
+  <button>Envoyer un message Telegram de test</button>
+</form>
+{% endblock %}

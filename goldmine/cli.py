@@ -24,8 +24,10 @@ def main(argv=None) -> int:
     p_run.add_argument("--trigger", default="manual")
     p_run.add_argument("--country", action="append", help="limiter à un pays (code)")
     p_run.add_argument("--no-publish", action="store_true")
-    sub.add_parser("process", help="recalculer sans scanner")
-    sub.add_parser("panel", help="panneau de contrôle local")
+    p_proc = sub.add_parser("process", help="recalculer sans scanner")
+    p_proc.add_argument("--publish", action="store_true")
+    p_panel = sub.add_parser("panel", help="panneau de contrôle local")
+    p_panel.add_argument("--no-browser", action="store_true")
     sub.add_parser("setup", help="installation (base + tâches planifiées)")
     sub.add_parser("status", help="derniers scans")
     args = parser.parse_args(argv)
@@ -36,10 +38,10 @@ def main(argv=None) -> int:
                             publish=not args.no_publish)
     if args.cmd == "process":
         from . import pipeline
-        return pipeline.run(trigger="process", scrape=False, publish=False)
+        return pipeline.run(trigger="process", scrape=False, publish=args.publish)
     if args.cmd == "panel":
         from .panel.app import serve
-        return serve()
+        return serve(open_browser=not args.no_browser)
     if args.cmd == "setup":
         from . import scheduler
         return scheduler.setup()

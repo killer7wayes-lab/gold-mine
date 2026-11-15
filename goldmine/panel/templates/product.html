@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block body %}
+<p><a href="{{ url_for('products', c=p.country) }}">← Tous les produits</a></p>
+<form class="card" method="post" action="{{ url_for('product_save', pid=p.id) }}">
+  <input type="hidden" name="_t" value="{{ token }}">
+  <div class="row" style="align-items:flex-start">
+    {% if p.image %}<img class="thumb" src="{{ url_for('thumbs', name=p.image) }}" alt="">{% endif %}
+    <div style="flex:1;min-width:240px">
+      <h2 dir="auto">{{ p.name }}</h2>
+      {% if res %}<p><span class="score">{{ res.score }}</span> {{ res.reason }}</p>{% endif %}
+      <p class="muted">{{ p.category }} · produit n°{{ p.id }}</p>
+    </div>
+  </div>
+  <div class="grid" style="margin-top:10px">
+    <label>Nom du produit (vide = nom automatique) <input type="text" name="name" dir="auto" value="{{ p.manual_name or '' }}" placeholder="{{ p.name }}"></label>
+    <label>Prix fournisseur ({{ currency }}) <input type="number" step="any" name="supplier_price" value="{{ p.supplier_price if p.supplier_price is not none else '' }}" placeholder="vide = estimation"></label>
+    <label>Note (fournisseur, lien…) <input type="text" name="supplier_note" value="{{ p.supplier_note or '' }}"></label>
+  </div>
+  <button class="gold">Enregistrer</button>
+</form>
+
+{% if sourcing %}
+<div class="card">
+  <h2>Trouvé dans les magasins locaux</h2>
+  <p class="help">Prix publics : utiles comme repère, ou comme prix d'achat si vous vous fournissez sur place.</p>
+  <table>
+    <tr><th>Magasin</th><th>Produit</th><th>Prix</th><th>Ressemblance</th><th></th></tr>
+    {% for s in sourcing %}
+    <tr><td>{{ s.store }}</td><td><a href="{{ s.url }}" target="_blank" rel="noopener">{{ s.title }}</a></td>
+      <td>{{ s.price }} {{ currency }}</td><td>{{ s.match }} %</td>
+      <td><form method="post" action="{{ url_for('product_save', pid=p.id) }}">
+        <input type="hidden" name="_t" value="{{ token }}"><input type="hidden" name="name" value="{{ p.manual_name or '' }}">
+        <input type="hidden" name="supplier_price" value="{{ s.price }}"><input type="hidden" name="supplier_note" value="{{ s.store }}">
+        <button>Utiliser ce prix</button></form></td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+<form class="card" method="post" action="{{ url_for('product_split', pid=p.id) }}">
+  <input type="hidden" name="_t" value="{{ token }}">
+  <div class="row" style="justify-content:space-between">
+    <h2>{{ ads|length }} pubs regroupées</h2>
+    <button>Séparer les pubs cochées dans un nouveau produit</button>
+  </div>
+  <p class="help">Une pub n'a rien à voir avec ce produit ? Cochez-la et séparez-la : elle ne reviendra pas.</p>
+  <table>
+    <tr><th></th><th>Page</th><th>Texte</th><th>Prix</th><th>Depuis</th><th>État</th><th></th></tr>
+    {% for a in ads %}
+    <tr>
+      <td><input type="checkbox" name="ads" value="{{ a.ad_id }}"></td>
+      <td dir="auto">{{ a.page_name }}</td>
+      <td dir="auto"><b>{{ a.title }}</b> {{ (a.body or '')[:160] }}</td>
+      <td>{{ a.price if a.price is not none else '?' }}</td>
+      <td>{{ a.start_date or '' }}</td>
+      <td>{{ 'active' if a.is_active else 'arrêtée' }}{% if a.collation_count > 1 %} ×{{ a.collation_count }}{% endif %}</td>
+      <td><a href="https://www.facebook.com/ads/library/?id={{ a.ad_id }}" target="_blank" rel="noopener">voir</a></td>
+    </tr>
+    {% endfor %}
+  </table>
+</form>
+{% endblock %}
