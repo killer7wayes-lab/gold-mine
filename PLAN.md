@@ -181,7 +181,10 @@ Presets shipped: "Faible concurrence", "Grosse marge", "En pleine croissance".
 ## 6. Scraper behaviour
 
 - URLs: `facebook.com/ads/library/?active_status=active&ad_type=all&country=XX&q=…&search_type=keyword_unordered`
-  for discovery, `…&view_all_page_id=ID&search_type=page` (active_status=all) for watched pages.
+  for discovery, `…&view_all_page_id=ID&search_type=page` for watched pages (active ads only: when a
+  page scan reaches the end of the list, its ads we did not see are marked stopped).
+- Browser: the installed Chrome, else Edge, else Playwright's Chromium. Windows Smart App Control
+  blocks the unsigned bundled Chromium on some PCs, the installed browsers always work.
 - Never logs in. If Facebook redirects to login / checkpoint / shows a rate-limit message or
   returns 429, the run backs off (exponential wait), and after 3 blocks stops scraping for
   this run and keeps what it has.
