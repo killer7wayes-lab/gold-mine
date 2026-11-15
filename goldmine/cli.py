@@ -29,6 +29,7 @@ def main(argv=None) -> int:
     p_panel = sub.add_parser("panel", help="panneau de contrôle local")
     p_panel.add_argument("--no-browser", action="store_true")
     sub.add_parser("setup", help="installation (base + tâches planifiées)")
+    sub.add_parser("regroup", help="refaire le regroupement automatique des produits")
     sub.add_parser("status", help="derniers scans")
     args = parser.parse_args(argv)
 
@@ -45,6 +46,14 @@ def main(argv=None) -> int:
     if args.cmd == "setup":
         from . import scheduler
         return scheduler.setup()
+    if args.cmd == "regroup":
+        from . import config, db, grouping, pipeline
+        conn, cfg = db.connect(), config.load()
+        for country in sorted({r[0] for r in conn.execute("SELECT DISTINCT country FROM ads")}):
+            if country in cfg["countries"]:
+                print(country, grouping.regroup(conn, cfg, country))
+        conn.close()
+        return pipeline.run(trigger="process", scrape=False, publish=False)
     if args.cmd == "status":
         from . import db
         conn = db.connect()

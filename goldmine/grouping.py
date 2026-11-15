@@ -102,17 +102,22 @@ def pair_score(a: _Doc, b: _Doc, cos: float, g: dict) -> tuple[float, bool]:
         name_sim = 0.0
         if a.name_tokens >= 2 and b.name_tokens >= 2:
             name_sim = fuzz.token_sort_ratio(a.norm_name, b.norm_name) / 100.0
-        text = max(cos, 0.9 * name_sim)
-        if text >= 0.9 and min(len(a.counts), len(b.counts)) >= 4:
+        # the same headline helps, but a shared slogan ("on est de retour !")
+        # must not be enough on its own: it is averaged with the full copy
+        text = max(cos, 0.5 * cos + 0.5 * name_sim)
+        if cos >= 0.9 and min(len(a.counts), len(b.counts)) >= 4:
             strong = True
     image = None
+    images_differ = same_picture = False
     if a.phash and b.phash:
         dist = hamming(a.phash, b.phash)
         if dist <= g["image_distance"]:
-            strong = True
+            strong = same_picture = True
         sim = 1 - dist / 32.0
         if sim >= 0.6:
             image = sim
+        else:
+            images_differ = True
     landing = None
     if a.nurl and b.nurl and a.domain == b.domain:
         if a.nurl == b.nurl:
@@ -122,11 +127,21 @@ def pair_score(a: _Doc, b: _Doc, cos: float, g: dict) -> tuple[float, bool]:
             landing = 0.7
         else:
             landing = 0.25               # same shop, another product page
+            if a.is_product_url and b.is_product_url and not same_picture:
+                # one shop, two different product pages: two products, even
+                # when the shop pastes the same text on every ad
+                return 0.0, False
     parts = [(g["w_text"], text), (g["w_image"], image), (g["w_landing"], landing)]
     parts = [(w, v) for w, v in parts if v is not None]
     if not parts:
         return 0.0, strong
-    return sum(w * v for w, v in parts) / sum(w for w, _ in parts), strong
+    score = sum(w * v for w, v in parts) / sum(w for w, _ in parts)
+    # Text is the only clue and the pictures are clearly different: two shops
+    # using the same ad template for different products look exactly like this.
+    # Ask for near-identical copy before linking.
+    if images_differ and landing is None and cos < g.get("text_only_min", 0.75):
+        score = 0.0
+    return score, strong
 
 
 def group_country(conn, cfg: dict, country: str) -> dict:
@@ -246,6 +261,19 @@ def refresh_products(conn, country: str | None = None) -> None:
     conn.commit()
 
 
+def regroup(conn, cfg: dict, country: str) -> dict:
+    """Forget the automatic grouping of a country and redo it with the current
+    rules. Manual work is kept: pinned ads (merged / split by hand) stay, and
+    so do products that have a manual name or a supplier price."""
+    conn.execute("""
+        UPDATE ads SET product_id=NULL WHERE country=? AND pinned=0 AND product_id IN (
+            SELECT id FROM products WHERE manual_name IS NULL AND supplier_price IS NULL)""",
+                 (country,))
+    conn.commit()
+    refresh_products(conn, country)              # drops the products left empty
+    return group_country(conn, cfg, country)
+
+
 def delete_product(conn, product_id: int) -> None:
     for table in ("product_snapshots", "sourcing", "alerts"):
         conn.execute(f"DELETE FROM {table} WHERE product_id=?", (product_id,))
@@ -297,7 +325,8 @@ def merge_products(conn, keep_id: int, other_id: int) -> bool:
     other = conn.execute("SELECT * FROM products WHERE id=?", (other_id,)).fetchone()
     if not keep or not other or keep_id == other_id or keep["country"] != other["country"]:
         return False
-    conn.execute("UPDATE ads SET product_id=?, pinned=1 WHERE product_id=?", (keep_id, other_id))
+    conn.execute("UPDATE ads SET product_id=? WHERE product_id=?", (keep_id, other_id))
+    conn.execute("UPDATE ads SET pinned=1 WHERE product_id=?", (keep_id,))   # decided by hand
     if keep["supplier_price"] is None and other["supplier_price"] is not None:
         conn.execute("UPDATE products SET supplier_price=?, supplier_note=? WHERE id=?",
                      (other["supplier_price"], other["supplier_note"], keep_id))

@@ -39,7 +39,7 @@ def normalize(text: str) -> str:
     """Lowercase, no accents, no emoji/punctuation, unified Arabic letters."""
     if not text:
         return ""
-    text = fix_digits(text).lower()
+    text = fix_digits(unicodedata.normalize("NFKC", text)).lower()
     text = _AR_MARKS.sub("", text).translate(_AR_MAP)
     text = "".join(c for c in unicodedata.normalize("NFKD", text)
                    if not unicodedata.combining(c))

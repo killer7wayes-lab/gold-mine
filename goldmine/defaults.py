@@ -66,6 +66,7 @@ DEFAULT_CONFIG = {
         "image_distance": 6,                 # pHash bits that may differ
         "cross_country_image_distance": 8,
         "w_text": 0.50, "w_image": 0.30, "w_landing": 0.20,
+        "text_only_min": 0.75,               # copy similarity needed when pictures differ
     },
     # Default scoring settings. The dashboard starts from these and lets the
     # user move every one of them live (stored in the browser).
@@ -119,7 +120,8 @@ DEFAULT_CONFIG = {
                 {"name": "Tunisianet", "enabled": True,
                  "search_url": "https://www.tunisianet.com.tn/recherche?controller=search&s={q}",
                  **PRESTASHOP},
-                {"name": "Mytek", "enabled": True,
+                # Mytek refuses automatic reading (HTTP 403): search link only
+                {"name": "Mytek", "enabled": True, "link_only": True,
                  "search_url": "https://www.mytek.tn/catalogsearch/result/?q={q}",
                  **MAGENTO},
                 {"name": "Spacenet", "enabled": True,

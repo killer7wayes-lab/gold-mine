@@ -11,7 +11,9 @@ from __future__ import annotations
 
 import json
 import logging
+import random
 import re
+import time
 from datetime import datetime, timedelta, timezone
 
 import requests
@@ -200,8 +202,18 @@ def fetch_missing(conn, cfg: dict, limit: int) -> int:
         todo[norm] = (r["landing_url"], r["country"])
         if len(todo) >= limit:
             break
+    throttled = set()
     for norm, (url, country) in todo.items():
+        host = norm.split("/", 1)[0]
+        # shops on one platform share its servers: converty.shop, youcan.shop...
+        family = ".".join(host.split(".")[-2:])
+        if family in throttled:
+            continue                              # asked to slow down: try next run
         res = fetch(url, cfg["countries"][country])
+        time.sleep(random.uniform(1.0, 2.5))
+        if res["status"] == "http 429":
+            throttled.add(family)
+            continue
         conn.execute("INSERT OR REPLACE INTO landings(url, title, price, platform, status, fetched_at) "
                      "VALUES(?,?,?,?,?,?)",
                      (norm, res["title"], res["price"], res["platform"], res["status"], db.now_iso()))

@@ -84,3 +84,41 @@ def test_names_and_categories():
     assert categorize("تلميع وتجديد البلاستيك للسيارة") == "Auto"
     assert categorize("Sérum anti rides visage") == "Beauté"
     assert categorize("Dossier de chaise") == "Autre"
+
+
+def test_shared_slogan_is_not_the_same_product(conn):
+    # two shops, same headline slogan, different goods, different pictures
+    add_ad(conn, "s1", "p1", "يا جماعة وينكم هنا رجعنالكم بالجديد\nNouvelle collection trench coat femme chic",
+           "", phash="b05b2acead943336", url="https://trend.shop/product/trench-coat")
+    add_ad(conn, "s2", "p2", "يا جماعة وينكم هنا رجعنالكم بالجديد\nEspadrilles homme sport pointure 40 à 45",
+           "", phash="4fa4d53152b6c1c9", url="https://shoes.tn/product/espadrille")
+    # two shops, word-for-word the same ad, different pictures: same product
+    copy = "PRIX CHOC : 29 DT SEULEMENT ! Jogging tendance et confortable, coton doux, tailles S à XXL"
+    add_ad(conn, "j1", "p3", copy, "", phash="86a7b35135a56372")
+    add_ad(conn, "j2", "p4", copy, "", phash="e918da66b45946ce")
+    grouping.group_country(conn, CFG, "TN")
+    assert products(conn) == [{"j1", "j2"}, {"s1"}, {"s2"}]
+
+
+def test_regroup_keeps_manual_work(conn):
+    add_ad(conn, "a1", "p1", "Montre connectée sport étanche", "Montre connectée")
+    add_ad(conn, "a2", "p2", "Ceinture lombaire chauffante dos", "Ceinture lombaire")
+    add_ad(conn, "a3", "p3", "Lampe LED solaire jardin étanche", "Lampe solaire")
+    grouping.group_country(conn, CFG, "TN")
+    ids = [r[0] for r in conn.execute("SELECT product_id FROM ads ORDER BY ad_id")]
+    grouping.merge_products(conn, ids[0], ids[1])                 # a1 + a2 by hand
+    conn.execute("UPDATE products SET supplier_price=9 WHERE id=?", (ids[2],))
+    conn.commit()
+    grouping.regroup(conn, CFG, "TN")
+    after = dict(conn.execute("SELECT ad_id, product_id FROM ads").fetchall())
+    assert after["a1"] == after["a2"] == ids[0] and after["a3"] == ids[2]
+    assert conn.execute("SELECT supplier_price FROM products WHERE id=?", (ids[2],)).fetchone()[0] == 9
+
+
+def test_one_shop_same_text_two_product_pages(conn):
+    copy = "Le restock que vous attendiez tous ! Livraison rapide, paiement à la livraison, stock limité"
+    add_ad(conn, "r1", "p1", copy, "", url="https://shop.tn/product/sandale-femme", phash="86a7b35135a56372")
+    add_ad(conn, "r2", "p1", copy, "", url="https://shop.tn/product/sac-a-main", phash="e918da66b45946ce")
+    add_ad(conn, "r3", "p1", copy, "", url="https://shop.tn/product/sac-a-main?utm_source=fb", phash="0f0f33cc55aa9911")
+    grouping.group_country(conn, CFG, "TN")
+    assert products(conn) == [{"r1"}, {"r2", "r3"}]

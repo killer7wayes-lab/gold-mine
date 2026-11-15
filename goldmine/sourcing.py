@@ -100,7 +100,8 @@ def update(conn, cfg: dict, limit: int) -> int:
     checked = 0
     recent = (datetime.now(timezone.utc) - timedelta(days=RECHECK_DAYS)).strftime("%Y-%m-%dT%H:%M:%SZ")
     for country, ccfg in cfg["countries"].items():
-        stores = [s for s in ccfg.get("stores", []) if s.get("enabled", True)]
+        stores = [s for s in ccfg.get("stores", [])
+                  if s.get("enabled", True) and not s.get("link_only")]
         if not stores or not ccfg.get("active"):
             continue
         costs = scoring.costs_of(ccfg)
