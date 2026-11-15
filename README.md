@@ -111,10 +111,21 @@ Double-click `panel.bat`.
 |---|---|
 | **Scans** | "Lancer un scan" now, see the log and the last runs |
 | **Pays** | Turn countries on/off, set currency, delivery, returns, ad cost, local stores |
-| **Mots-clés** | Add / remove search keywords per country |
+| **Mots-clés** | Tick the **niches** you want (Beauté, Cuisine, Mode…), add / remove search keywords per country |
 | **Pages surveillées** | Add a competitor's page, remove a page that is not a shop |
 | **Produits** | Merge two products that are the same, split ads that do not belong, type your supplier price, rename |
 | **Réglages** | Scan hours, how many ads per scan, GitHub address, Telegram, default weights |
+
+### Choosing a niche, and getting more data
+
+- **Niches.** In **Mots-clés**, tick one or more niches. Each niche adds about 8 product searches
+  in French and Arabic ("friteuse sans huile", "خلاط"…). Tick "Scanner uniquement les niches
+  cochées" to drop the general keywords and scan only your niches. On the dashboard, the
+  **Catégorie** filter uses the same names.
+- **More data.** The library grows by itself: about 600 ads per scan, twice a day. To go faster,
+  raise "Pubs à lire par scan" in **Réglages** (1 000–1 500 is reasonable; more means more risk
+  that Facebook slows the scan down) and "Produits envoyés au tableau de bord" (300 by default).
+- Searches take turns: with many keywords, each scan runs the ones searched longest ago.
 
 ### The other tabs of the dashboard
 
@@ -139,10 +150,10 @@ Double-click `panel.bat`.
 - Money numbers are estimates. Use them to rank ideas, then test with a small budget.
 - Facebook can change the Ad Library page. The reader is tolerant, but one day it may need a fix.
 - Grouping is good, not perfect. Fix mistakes in two clicks in **Produits**.
-- Sourcing: Tunisianet, Spacenet and SBS Informatique searches are read automatically (they are
-  electronics and appliance stores, so many COD gadgets will simply not be there). Mytek refuses
-  automatic reading, so for Mytek, and for AliExpress which is never scraped, you get a ready-made
-  search link instead.
+- Sourcing: Tunisianet, Spacenet and SBS Informatique are electronics and appliance stores, so
+  they are only looked up for products of those categories (never for shoes or creams). Mytek
+  refuses automatic reading, so for Mytek, for Jumia (all categories) and for AliExpress, which
+  is never scraped, you get a ready-made search link instead.
 - The free GitHub Pages site is public: anyone who has the link can open your dashboard (it asks
   search engines not to list it).
 

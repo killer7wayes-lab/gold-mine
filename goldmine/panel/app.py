@@ -21,7 +21,7 @@ from flask import (Flask, abort, flash, jsonify, redirect, render_template, requ
 
 from .. import (alerts, config, db, export, grouping, pipeline, publish, scheduler,
                 scoring, signals)
-from ..defaults import MAGENTO, PRESTASHOP
+from ..defaults import MAGENTO, NICHES, PRESTASHOP
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
@@ -216,7 +216,8 @@ def keywords():
         SELECT value, MAX(done_at) last, SUM(ads_found) ads FROM tasks
         WHERE kind='keyword' AND country=? AND status='done' GROUP BY value""", (code,))}
     conn.close()
-    return render_template("keywords.html", stats=stats)
+    return render_template("keywords.html", stats=stats, niches=NICHES,
+                           scanned=config.scan_keywords(cfg["countries"][code]))
 
 
 @app.post("/mots-cles")
@@ -224,6 +225,12 @@ def keywords_edit():
     cfg = config.load()
     code = _country(cfg)
     kws = cfg["countries"][code]["keywords"]
+    if request.form.get("niches_form"):
+        chosen = [n for n in NICHES if n in request.form.getlist("niches")]
+        cfg["countries"][code]["niches"] = chosen
+        cfg["countries"][code]["niche_only"] = bool(request.form.get("niche_only")) and bool(chosen)
+        flash("Niches enregistrées : " + (", ".join(chosen) if chosen else "aucune")
+              + ". Elles seront utilisées dès le prochain scan.")
     if request.form.get("remove"):
         kws[:] = [k for k in kws if k != request.form["remove"]]
     for line in request.form.get("add", "").splitlines():

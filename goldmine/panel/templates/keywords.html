@@ -5,8 +5,25 @@
     <a class="btn {{ 'gold' if code == cur }}" href="{{ url_for('keywords', c=code) }}">{{ c.flag }} {{ c.name }}{{ '' if c.active else ' (inactif)' }}</a>
   {% endfor %}
 </div>
+<form class="card" method="post" action="{{ url_for('keywords_edit', c=cur) }}">
+  <input type="hidden" name="_t" value="{{ token }}"><input type="hidden" name="niches_form" value="1">
+  <h2>Niches – {{ countries[cur].name }}</h2>
+  <p class="help">Cochez les niches qui vous intéressent : le scan cherchera aussi les produits de ces niches
+    (en français et en arabe). Sur le dashboard, le filtre « Catégorie » porte les mêmes noms.</p>
+  <div class="niches">
+    {% for name, kws in niches.items() %}
+    <label class="niche"><input type="checkbox" name="niches" value="{{ name }}"
+        {{ 'checked' if name in countries[cur].niches }}>
+      <span><b>{{ name }}</b><small dir="auto">{{ kws|join(' · ') }}</small></span></label>
+    {% endfor %}
+  </div>
+  <label class="check"><input type="checkbox" name="niche_only" value="1" {{ 'checked' if countries[cur].niche_only }}>
+    Scanner uniquement les niches cochées (ignorer les mots-clés généraux ci-dessous)</label>
+  <button class="gold">Enregistrer les niches</button>
+  <span class="muted">{{ scanned|length }} recherches au total, à tour de rôle sur plusieurs scans.</span>
+</form>
 <div class="card">
-  <h2>Mots-clés – {{ countries[cur].name }}</h2>
+  <h2>Mots-clés généraux – {{ countries[cur].name }}</h2>
   <p class="help">Chaque scan cherche ces expressions dans la Bibliothèque publicitaire du pays, en commençant par
     celles cherchées il y a le plus longtemps. Pensez « livraison, paiement à la livraison, prix » dans les langues du pays.</p>
   <div class="tags">

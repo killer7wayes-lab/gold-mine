@@ -105,3 +105,39 @@ def test_watch_page_and_guards(panel):
     c = panel_app.app.test_client()
     assert c.post("/mots-cles", data={"add": "x"}, base_url="http://localhost:5000").status_code == 403
     assert c.get("/", base_url="http://attacker.example").status_code == 403
+
+
+def test_niches_drive_the_scan(panel):
+    from goldmine import pipeline
+    from goldmine.defaults import NICHES
+    assert "Niches" in panel.get("/mots-cles?c=TN").get_data(as_text=True)
+    general = DEFAULT_CONFIG["countries"]["TN"]["keywords"]
+    assert config.scan_keywords(config.load()["countries"]["TN"]) == general
+    panel.post("/mots-cles?c=TN", niches_form="1", niches=["Cuisine", "Beauté", "pas une niche"])
+    tn = config.load()["countries"]["TN"]
+    assert tn["niches"] == ["Beauté", "Cuisine"] and tn["niche_only"] is False
+    kws = config.scan_keywords(tn)
+    assert set(general) < set(kws) and set(NICHES["Cuisine"]) < set(kws) and len(kws) == len(set(kws))
+    panel.post("/mots-cles?c=TN", niches_form="1", niches=["Cuisine"], niche_only="1")
+    tn = config.load()["countries"]["TN"]
+    assert config.scan_keywords(tn) == NICHES["Cuisine"]
+    conn = db.connect()
+    run_id = db.start_run(conn, "test")
+    pipeline.build_tasks(conn, config.load(), run_id, ["TN"])
+    queued = [r["value"] for r in db.rows(conn, "SELECT value FROM tasks WHERE run_id=? AND kind='keyword'", (run_id,))]
+    conn.close()
+    assert sorted(queued) == sorted(NICHES["Cuisine"])
+    panel.post("/mots-cles?c=TN", niches_form="1", niche_only="1")      # nothing ticked: back to general
+    tn = config.load()["countries"]["TN"]
+    assert tn["niches"] == [] and tn["niche_only"] is False and config.scan_keywords(tn) == general
+
+
+def test_tech_stores_only_for_their_categories(conn):
+    from goldmine import sourcing
+    stores = DEFAULT_CONFIG["countries"]["TN"]["stores"]
+    ccfg = {"stores": stores}
+    def names(cat):
+        return [s["store"] for s in sourcing.links_for(conn, {"id": 1, "name": "Chaussure cuir homme", "category": cat}, ccfg)["stores"]]
+    assert names("Mode") == ["Jumia"] and names("Autre") == ["Jumia"]
+    assert names("Électronique") == ["Tunisianet", "Mytek", "Spacenet", "SBS Informatique", "Jumia"]
+    assert "SBS Informatique" not in names("Cuisine") and "Tunisianet" in names("Cuisine")

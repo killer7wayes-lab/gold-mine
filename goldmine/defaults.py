@@ -16,6 +16,9 @@ MAGENTO = {
     "price": ".final-price, .special-price .price, .price",
 }
 
+# what the Tunisian tech stores sell (names from CATEGORIES)
+TECH_STORE = ["Électronique", "Cuisine", "Maison", "Bricolage & jardin"]
+
 
 def _country(name, flag, currency, tokens, decimals, price_min, price_max,
              delivery, return_rate, ad_cost, margin_target, keywords,
@@ -34,6 +37,8 @@ def _country(name, flag, currency, tokens, decimals, price_min, price_max,
         "ad_cost": ad_cost,                # typical ad cost per order (medium tier)
         "margin_target": margin_target,    # margin that gets the full "margin" points
         "keywords": keywords,
+        "niches": [],                      # names from NICHES, ticked in the panel
+        "niche_only": False,               # True = skip the general keywords
         "stores": stores or [],
         "aliexpress_lang": aliexpress_lang,
     }
@@ -116,21 +121,26 @@ DEFAULT_CONFIG = {
                 "الكمية محدودة", "عرض خاص", "stock limité", "promo dt",
                 "prix", "DT", "TND",
             ],
+            # "categories": these are tech / appliance stores, so they are only
+            # looked up for products of those categories (never for shoes).
             stores=[
-                {"name": "Tunisianet", "enabled": True,
+                {"name": "Tunisianet", "enabled": True, "categories": TECH_STORE,
                  "search_url": "https://www.tunisianet.com.tn/recherche?controller=search&s={q}",
                  **PRESTASHOP},
                 # Mytek refuses automatic reading (HTTP 403): search link only
-                {"name": "Mytek", "enabled": True, "link_only": True,
+                {"name": "Mytek", "enabled": True, "link_only": True, "categories": TECH_STORE,
                  "search_url": "https://www.mytek.tn/catalogsearch/result/?q={q}",
                  **MAGENTO},
-                {"name": "Spacenet", "enabled": True,
+                {"name": "Spacenet", "enabled": True, "categories": TECH_STORE,
                  "search_url": "https://spacenet.tn/recherche?controller=search&s={q}",
                  **PRESTASHOP},
-                {"name": "SBS Informatique", "enabled": True,
+                {"name": "SBS Informatique", "enabled": True, "categories": ["Électronique"],
                  "search_url": "https://www.sbsinformatique.com/recherche?controller=search&s={q}",
                  "item": ".tvproduct-wrapper", "title": ".tvproduct-name a, .product-title a",
                  "price": ".price"},
+                # general marketplace (everything, shoes included): search link only
+                {"name": "Jumia", "enabled": True, "link_only": True,
+                 "search_url": "https://www.jumia.com.tn/catalog/?q={q}"},
             ],
             active=True,
         ),
@@ -241,4 +251,35 @@ CATEGORIES = {
     "Bricolage & jardin": ["outil", "perceuse", "jardin", "arrosage", "colle",
                            "tournevis", "soudure", "pompe", "ادوات", "حديقه",
                            "مثقاب", "لحام", "ري", "مضخه"],
+}
+
+
+# One-click niches (control panel > Mots-clés). Each niche adds these searches
+# to the country's scans. Names match CATEGORIES so the dashboard's category
+# filter shows the same niche. French + Arabic work across the Maghreb.
+NICHES = {
+    "Beauté": ["sérum visage", "crème anti-rides", "parfum", "soin cheveux", "épilateur",
+               "maquillage", "العناية بالبشرة", "سيروم", "عطر", "تساقط الشعر"],
+    "Santé": ["masseur", "ceinture lombaire", "correcteur de posture", "anti douleur",
+              "minceur", "مساج", "آلام الظهر", "تخسيس"],
+    "Cuisine": ["ustensiles de cuisine", "mixeur", "friteuse sans huile", "robot de cuisine",
+                "hachoir", "poêle", "مطبخ", "خلاط", "قلاية"],
+    "Maison": ["rangement", "décoration maison", "matelas", "aspirateur", "lampe LED",
+               "canapé", "ديكور", "تنظيف", "للمنزل"],
+    "Électronique": ["écouteurs bluetooth", "smartwatch", "chargeur rapide",
+                     "caméra de surveillance", "projecteur", "power bank", "سماعات",
+                     "ساعة ذكية", "كاميرا مراقبة"],
+    "Mode": ["chaussures", "montre", "sac à main", "robe", "lunettes de soleil",
+             "ensemble femme", "حذاء", "ساعة", "حقيبة"],
+    "Auto": ["accessoires voiture", "aspirateur voiture", "support téléphone voiture",
+             "housse siège voiture", "للسيارة", "اكسسوارات سيارات"],
+    "Bébé & enfants": ["jouet", "bébé", "poussette", "jeux éducatifs", "ألعاب أطفال",
+                       "للرضع", "للأطفال"],
+    "Sport": ["fitness", "musculation", "tapis de course", "vélo d'appartement",
+              "haltères", "رياضة", "تمارين"],
+    "Alimentation": ["miel", "complément alimentaire", "huile d'olive", "dattes", "عسل",
+                     "مكمل غذائي"],
+    "Animaux": ["chat", "chien", "croquettes", "accessoires animaux", "قطط", "كلاب"],
+    "Bricolage & jardin": ["perceuse", "outils", "visseuse", "jardin", "arrosage",
+                           "أدوات", "حديقة"],
 }

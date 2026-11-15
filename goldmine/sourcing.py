@@ -1,7 +1,8 @@
 """Where to buy the product, and for how much.
 
 - local stores of the country (config: search URL + CSS selectors): we run the
-  store's own search with the product keywords and keep the closest result
+  store's own search with the product keywords and keep the closest result.
+  A store with "categories" (a tech store) is only used for those categories
 - AliExpress: we only build a search link (never scraped)
 - the manual supplier price entered in the control panel always wins in the
   margin; store prices are shown as a reference
@@ -42,6 +43,13 @@ def store_search_url(store: dict, name: str) -> str:
     if not terms or "{q}" not in store.get("search_url", ""):
         return ""
     return store["search_url"].replace("{q}", quote_plus(terms))
+
+
+def store_applies(store: dict, category: str | None) -> bool:
+    """A store limited to some categories (a tech store) is not used for the
+    others. A product of unknown category ("Autre") is not looked up either."""
+    cats = store.get("categories")
+    return not cats or category in cats
 
 
 def parse_results(html, store: dict, country_cfg: dict, base_url: str) -> list[dict]:
@@ -110,9 +118,12 @@ def update(conn, cfg: dict, limit: int) -> int:
         for p in products:
             if checked >= limit:
                 return checked
+            usable = [s for s in stores if store_applies(s, p.get("category"))]
+            if not usable:
+                continue
             done = {r["store"] for r in conn.execute(
                 "SELECT store FROM sourcing WHERE product_id=? AND checked_at>=?", (p["id"], recent))}
-            todo = [s for s in stores if s["name"] not in done]
+            todo = [s for s in usable if s["name"] not in done]
             if not todo or not search_terms(p["name"], 4):
                 continue
             for store in todo:
@@ -141,7 +152,7 @@ def links_for(conn, product: dict, country_cfg: dict) -> dict:
         "SELECT * FROM sourcing WHERE product_id=?", (product["id"],))}
     stores = []
     for store in country_cfg.get("stores", []):
-        if not store.get("enabled", True):
+        if not store.get("enabled", True) or not store_applies(store, product.get("category")):
             continue
         row = found.get(store["name"])
         entry = {"store": store["name"], "search": store_search_url(store, product["name"])}

@@ -85,3 +85,12 @@ def active_countries(cfg: dict) -> list[str]:
 def ensure_dirs() -> None:
     for d in (DATA_DIR, THUMBS_DIR, LOG_DIR, DOCS_DIR / "data" / "img"):
         d.mkdir(parents=True, exist_ok=True)
+
+
+def scan_keywords(country_cfg: dict) -> list[str]:
+    """What a scan really searches: the general keywords (unless the country is
+    set to "niches only") plus the keywords of every ticked niche."""
+    from .defaults import NICHES
+    niche = [kw for name in country_cfg.get("niches") or [] for kw in NICHES.get(name, [])]
+    general = [] if (country_cfg.get("niche_only") and niche) else country_cfg.get("keywords") or []
+    return list(dict.fromkeys(k.strip() for k in [*general, *niche] if k and k.strip()))

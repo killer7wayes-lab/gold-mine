@@ -149,8 +149,7 @@ def build_tasks(conn, cfg: dict, run_id: int, countries: list[str]) -> None:
         last = {r["value"]: r["d"] or "" for r in db.rows(
             conn, "SELECT value, MAX(done_at) d FROM tasks WHERE kind='keyword' "
                   "AND country=? AND status='done' GROUP BY value", (country,))}
-        keywords = sorted(dict.fromkeys(k.strip() for k in ccfg["keywords"] if k.strip()),
-                          key=lambda k: last.get(k, ""))
+        keywords = sorted(config.scan_keywords(ccfg), key=lambda k: last.get(k, ""))
         for kw in keywords:
             conn.execute("INSERT INTO tasks(run_id, country, kind, value, label) VALUES(?,?,?,?,?)",
                          (run_id, country, "keyword", kw, kw))
